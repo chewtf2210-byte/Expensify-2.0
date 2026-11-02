@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- iOS Web App Meta Tags for instant native feel -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Expensify">
+    <link rel="apple-touch-icon" href="https://placehold.co/180x180/4f46e5/ffffff?text=RM">
+    <title>Expense Tracker</title>
+    <!-- Tailwind CSS (Offline-ready CDN with local fallback simulation if needed) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 h-full flex flex-col">
+
+    <!-- Header / Navbar -->
+    <header class="bg-indigo-600 text-white shadow-md py-4 px-6 shrink-0">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/10 p-2 rounded-xl backdrop-blur-sm">
+                    <i class="fa-solid fa-wallet text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">Expensify</h1>
+                    <p class="text-[10px] text-indigo-200 uppercase tracking-wider font-medium">RM Currency • Offline Ready</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <!-- Mobile Simulator Toggle Button -->
+                <button onclick="toggleMobileSimulator()" class="hidden md:flex items-center space-x-1.5 bg-indigo-700/80 hover:bg-indigo-700 text-white text-xs font-medium px-3 py-1.5 rounded-full border border-indigo-500/30 transition-all">
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+                    <span id="simulator-btn-text">iPhone View</span>
+                </button>
+                <div class="text-xs bg-indigo-700/60 px-3 py-1.5 rounded-full border border-indigo-500/30 hidden sm:block">
+                    <i class="fa-regular fa-calendar-days mr-1.5"></i> <span id="current-date"></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container Wrapper for iPhone Simulator toggle -->
+    <div id="app-wrapper" class="flex-grow flex justify-center items-center overflow-hidden transition-all duration-300 w-full">
+        <main id="main-container" class="w-full max-w-7xl h-full p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto transition-all duration-300">
+
+        <!-- Summary Cards Grid (Daily, Weekly, Yearly) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <!-- Daily Card -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex items-center justify-between relative overflow-hidden group hover:shadow-md transition-all">
+                <div class="absolute -right-6 -bottom-6 bg-emerald-50 text-emerald-500 rounded-full w-28 h-28 flex items-center justify-center opacity-40 group-hover:scale-110 transition-transform pointer-events-none">
+                    <i class="fa-solid fa-sun text-4xl"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Today's Expenses</p>
+                    <h2 id="total-daily" class="text-3xl font-bold text-slate-800">RM 0.00</h2>
+                    <p class="text-xs text-slate-400 mt-2 flex items-center">
+                        <span class="text-emerald-600 font-medium inline-flex items-center mr-1"><i class="fa-solid fa-arrow-trend-down mr-0.5"></i> Daily</span> tracking active
+                    </p>
+                </div>
+                <div class="bg-emerald-100 text-emerald-600 p-3.5 rounded-2xl shadow-inner">
+                    <i class="fa-solid fa-calendar-day text-xl"></i>
+                </div>
+            </div>
+
+            <!-- Weekly Card -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex items-center justify-between relative overflow-hidden group hover:shadow-md transition-all">
+                <div class="absolute -right-6 -bottom-6 bg-blue-50 text-blue-500 rounded-full w-28 h-28 flex items-center justify-center opacity-40 group-hover:scale-110 transition-transform pointer-events-none">
+                    <i class="fa-solid fa-calendar-week text-4xl"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">This Week's Expenses</p>
+                    <h2 id="total-weekly" class="text-3xl font-bold text-slate-800">RM 0.00</h2>
+                    <p class="text-xs text-slate-400 mt-2 flex items-center">
+                        <span class="text-blue-600 font-medium inline-flex items-center mr-1"><i class="fa-solid fa-calendar mr-0.5"></i> Past 7 Days</span>
+                    </p>
+                </div>
+                <div class="bg-blue-100 text-blue-600 p-3.5 rounded-2xl shadow-inner">
+                    <i class="fa-solid fa-calendar-week text-xl"></i>
+                </div>
+            </div>
+
+            <!-- Yearly Card -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex items-center justify-between relative overflow-hidden group hover:shadow-md transition-all">
+                <div class="absolute -right-6 -bottom-6 bg-purple-50 text-purple-500 rounded-full w-28 h-28 flex items-center justify-center opacity-40 group-hover:scale-110 transition-transform pointer-events-none">
+                    <i class="fa-solid fa-calendar-days text-4xl"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">This Year's Expenses</p>
+                    <h2 id="total-yearly" class="text-3xl font-bold text-slate-800">RM 0.00</h2>
+                    <p class="text-xs text-slate-400 mt-2 flex items-center">
+                        <span class="text-purple-600 font-medium inline-flex items-center mr-1"><i class="fa-solid fa-chart-line mr-0.5"></i> Current Year</span>
+                    </p>
+                </div>
+                <div class="bg-purple-100 text-purple-600 p-3.5 rounded-2xl shadow-inner">
+                    <i class="fa-solid fa-calendar-days text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Split Grid: Add Form + Chart & Table -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Left Column: Add Expense Form -->
+            <div class="lg:col-span-4 bg-white rounded-2xl p-6 shadow-sm border border-slate-100 h-fit">
+                <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
+                    <i class="fa-solid fa-circle-plus text-indigo-600 mr-2"></i> Add New Expense
+                </h3>
+                <form id="expense-form" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Description</label>
+                        <input type="text" id="expense-desc" required placeholder="e.g., Nasi Lemak, Grab..." 
+                            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm transition-all">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Amount (RM)</label>
+                        <input type="number" id="expense-amount" step="0.01" min="0.01" required placeholder="0.00" 
+                            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm transition-all">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Category</label>
+                        <select id="expense-category" required 
+                            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm bg-white transition-all">
+                            <option value="Food & Dining">🍔 Food & Dining</option>
+                            <option value="Transportation">🚗 Transportation</option>
+                            <option value="Shopping">🛍️ Shopping</option>
+                            <option value="Entertainment">🎬 Entertainment</option>
+                            <option value="Bills & Utilities">💡 Bills & Utilities</option>
+                            <option value="Health & Fitness">💊 Health & Fitness</option>
+                            <option value="Others">📦 Others</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Date</label>
+                        <input type="date" id="expense-date" required 
+                            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm transition-all">
+                    </div>
+
+                    <button type="submit" 
+                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center space-x-2 text-sm mt-2">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Add Expense</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Right Column: Chart & History -->
+            <div class="lg:col-span-8 space-y-6">
+
+                <!-- Pie Chart Card -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-2">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">Category Breakdown</h3>
+                            <p class="text-xs text-slate-400">Total expense distribution across categories</p>
+                        </div>
+                        <div class="flex items-center space-x-2 bg-slate-100 p-1 rounded-xl text-xs font-medium">
+                            <button onclick="setChartFilter('all')" id="filter-all" class="px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-sm transition-all">All Time</button>
+                            <button onclick="setChartFilter('year')" id="filter-year" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all">Year</button>
+                            <button onclick="setChartFilter('week')" id="filter-week" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all">Week</button>
+                        </div>
+                    </div>
+                    <div class="relative w-full h-72 flex items-center justify-center">
+                        <canvas id="expenseChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Recent Expenses Table Card -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+                        <div class="flex items-center space-x-3">
+                            <h3 class="text-lg font-bold text-slate-800">Expense History</h3>
+                            <span id="expense-count" class="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full font-medium">0 items</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <!-- Date Filter Toggle Button -->
+                            <button onclick="toggleDateFilterModal()" class="text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-xl transition-all flex items-center space-x-1.5">
+                                <i class="fa-solid fa-filter"></i>
+                                <span id="date-filter-btn-text">Filter by Date</span>
+                            </button>
+                            <button onclick="confirmClearAll()" class="text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-xl transition-all flex items-center space-x-1.5">
+                                <i class="fa-solid fa-trash-can"></i>
+                                <span>Clear All</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Active Filter Banner (Shown when filter is applied) -->
+                    <div id="active-filter-banner" class="hidden mb-4 p-3 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center justify-between text-xs text-indigo-800">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-calendar-check text-indigo-600"></i>
+                            <span id="filter-banner-text">Showing filtered expenses</span>
+                        </div>
+                        <button onclick="clearDateFilter()" class="font-semibold text-indigo-600 hover:text-indigo-800 underline">Reset Filter</button>
+                    </div>
+
+                    <div class="overflow-x-auto max-h-72 overflow-y-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-100 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                                    <th class="py-3 px-3">Description</th>
+                                    <th class="py-3 px-3">Category</th>
+                                    <th class="py-3 px-3">Date</th>
+                                    <th class="py-3 px-3 text-right">Amount</th>
+                                    <th class="py-3 px-3 text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expense-table-body" class="divide-y divide-slate-50 text-sm">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Empty State -->
+                    <div id="empty-state" class="hidden text-center py-10">
+                        <div class="text-slate-300 text-4xl mb-2">
+                            <i class="fa-solid fa-receipt"></i>
+                        </div>
+                        <p class="text-sm font-medium text-slate-500">No expenses recorded yet.</p>
+                        <p class="text-xs text-slate-400 mt-1">Add your first expense using the form on the left.</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+    </div>
+
+    <!-- iPhone Simulator Shell Overlay (Hidden by default, can be toggled or viewed on mobile) -->
+    <div id="iphone-notch-bar" class="hidden"></div>
+
+    <!-- Custom Notification Modal -->
+    <div id="custom-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl border border-slate-100 text-center space-y-4">
+            <div id="modal-icon" class="w-12 h-12 rounded-full flex items-center justify-center mx-auto text-xl bg-emerald-100 text-emerald-600">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h4 id="modal-title" class="text-lg font-bold text-slate-800">Success</h4>
+            <p id="modal-message" class="text-sm text-slate-500">Action completed successfully.</p>
+            <div id="modal-buttons" class="flex space-x-2">
+                <button onclick="closeModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition-all">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date Filter Modal -->
+    <div id="date-filter-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl border border-slate-100 space-y-4 text-left">
+            <div class="flex justify-between items-center">
+                <h4 class="text-lg font-bold text-slate-800 flex items-center space-x-2">
+                    <i class="fa-solid fa-calendar-days text-indigo-600 mr-2"></i> Filter Expenses by Date
+                </h4>
+                <button onclick="closeDateFilterModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4 pt-2">
+                <!-- Filter Mode Selector Tabs -->
+                <div class="flex bg-slate-100 p-1 rounded-xl text-xs font-medium">
+                    <button type="button" onclick="switchFilterMode('single')" id="mode-single-btn" class="flex-1 py-2 rounded-lg bg-white text-indigo-600 shadow-sm transition-all">Specific Day</button>
+                    <button type="button" onclick="switchFilterMode('range')" id="mode-range-btn" class="flex-1 py-2 rounded-lg text-slate-600 hover:text-indigo-600 transition-all">Date Range</button>
+                </div>
+
+                <!-- Single Date Selector -->
+                <div id="single-date-container" class="space-y-1.5">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Select Specific Day</label>
+                    <input type="date" id="filter-single-date" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                </div>
+
+                <!-- Date Range Selector -->
+                <div id="range-date-container" class="space-y-3 hidden">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">From Date</label>
+                        <input type="date" id="filter-start-date" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">To Date</label>
+                        <input type="date" id="filter-end-date" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                    </div>
+                </div>
+
+                <div class="flex space-x-2 pt-3">
+                    <button onclick="clearDateFilter()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-4 rounded-xl text-sm transition-all">
+                        Reset / All
+                    </button>
+                    <button onclick="applyDateFilter()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition-all">
+                        Apply Filter
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        // Category color mapping
+        const categoryColors = {
+            'Food & Dining': '#f97316',     // Orange
+            'Transportation': '#3b82f6',  // Blue
+            'Shopping': '#ec4899',        // Pink
+            'Entertainment': '#8b5cf6',   // Purple
+            'Bills & Utilities': '#eab308',// Yellow
+            'Health & Fitness': '#10b981',// Emerald
+            'Others': '#64748b'           // Slate
+        };
+
+        // Initialize with empty array or load safely from localStorage with robust error handling
+        let expenses = [];
+        try {
+            const savedExpenses = localStorage.getItem('expensify_items');
+            if (savedExpenses) {
+                expenses = JSON.parse(savedExpenses);
+            }
+        } catch (e) {
+            console.error('Failed to load expenses from localStorage:', e);
+            expenses = [];
+        }
+
+        let chartFilter = 'all'; // 'all', 'year', 'week'
+        let expenseChart = null;
+        let isSimulatorActive = false;
+
+        // Date Filter State Variables
+        let activeDateFilter = null; // { type: 'single'|'range', start: 'YYYY-MM-DD', end: 'YYYY-MM-DD' }
+        let currentFilterMode = 'single';
+
+        // Set current date in header & default date picker value
+        const todayStr = new Date().toISOString().split('T')[0];
+        const dateEl = document.getElementById('current-date');
+        if (dateEl) {
+            dateEl.innerText = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+        document.getElementById('expense-date').value = todayStr;
+
+        // DOM Elements
+        const form = document.getElementById('expense-form');
+        const descInput = document.getElementById('expense-desc');
+        const amountInput = document.getElementById('expense-amount');
+        const categoryInput = document.getElementById('expense-category');
+        const dateInput = document.getElementById('expense-date');
+        const tableBody = document.getElementById('expense-table-body');
+        const emptyState = document.getElementById('empty-state');
+        const expenseCount = document.getElementById('expense-count');
+
+        const totalDailyEl = document.getElementById('total-daily');
+        const totalWeeklyEl = document.getElementById('total-weekly');
+        const totalYearlyEl = document.getElementById('total-yearly');
+
+        // Initialize App on load
+        window.addEventListener('DOMContentLoaded', () => {
+            initChart();
+            updateUI();
+            
+            // Auto detect if opened on iOS / iPhone device to add optimal styling or prompt
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            if (isIOS) {
+                // If on real iPhone, ensure full screen touch experience
+                document.body.classList.add('ios-device');
+            }
+        });
+
+        // Toggle iPhone Simulator frame on desktop
+        function toggleMobileSimulator() {
+            isSimulatorActive = !isSimulatorActive;
+            const wrapper = document.getElementById('app-wrapper');
+            const mainContainer = document.getElementById('main-container');
+            const btnText = document.getElementById('simulator-btn-text');
+
+            if (isSimulatorActive) {
+                wrapper.className = 'flex-grow flex justify-center items-center py-6 bg-slate-900/10 overflow-y-auto transition-all duration-300';
+                mainContainer.className = 'w-[390px] h-[844px] bg-slate-50 rounded-[48px] shadow-2xl border-[12px] border-slate-800 p-4 space-y-5 overflow-y-auto relative transition-all duration-300';
+                btnText.innerText = 'Exit iPhone View';
+            } else {
+                wrapper.className = 'flex-grow flex justify-center items-center overflow-hidden transition-all duration-300 w-full';
+                mainContainer.className = 'w-full max-w-7xl h-full p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto transition-all duration-300';
+                btnText.innerText = 'iPhone View';
+            }
+            if (expenseChart) {
+                setTimeout(() => expenseChart.resize(), 300);
+            }
+        }
+
+        // Form Submission Handler
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const desc = descInput.value.trim();
+            const amount = parseFloat(amountInput.value);
+            const category = categoryInput.value;
+            const date = dateInput.value;
+
+            if (!desc || isNaN(amount) || amount <= 0 || !date) {
+                showModal('Error', 'Please fill in all fields with valid data.', 'error');
+                return;
+            }
+
+            const newExpense = {
+                id: Date.now(),
+                desc,
+                amount,
+                category,
+                date
+            };
+
+            expenses.unshift(newExpense);
+            saveAndRefresh();
+            form.reset();
+            dateInput.value = todayStr; // reset date to today
+            showModal('Success', 'Expense added successfully!', 'success');
+        });
+
+        // Delete Expense
+        function deleteExpense(id) {
+            expenses = expenses.filter(item => item.id !== id);
+            saveAndRefresh();
+        }
+
+        // Confirm Clear All Expenses
+        function confirmClearAll() {
+            if (expenses.length === 0) {
+                showModal('Notice', 'There are no expenses to clear.', 'info');
+                return;
+            }
+
+            const modal = document.getElementById('custom-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalMessage = document.getElementById('modal-message');
+            const modalIcon = document.getElementById('modal-icon');
+            const modalButtons = document.getElementById('modal-buttons');
+
+            modalTitle.innerText = 'Clear All Expenses';
+            modalMessage.innerText = 'Are you sure you want to delete all recorded expenses? This action cannot be undone.';
+            modalIcon.className = 'w-12 h-12 rounded-full flex items-center justify-center mx-auto text-xl bg-rose-100 text-rose-600';
+            modalIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+
+            modalButtons.innerHTML = `
+                <button onclick="closeModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-4 rounded-xl text-sm transition-all">
+                    Cancel
+                </button>
+                <button onclick="executeClearAll()" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition-all">
+                    Clear All
+                </button>
+            `;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        // Execute Clear All
+        function executeClearAll() {
+            expenses = [];
+            saveAndRefresh();
+            closeModal();
+            showModal('Cleared', 'All expenses have been successfully cleared.', 'success');
+        }
+
+        // Save to localStorage with error handling and update UI & Chart
+        function saveAndRefresh() {
+            try {
+                localStorage.setItem('expensify_items', JSON.stringify(expenses));
+            } catch (e) {
+                console.error('Failed to save to localStorage:', e);
+            }
+            updateUI();
+        }
+
+        // Date Filter Modal Controls
+        function toggleDateFilterModal() {
+            const modal = document.getElementById('date-filter-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // Set default values in date filters if empty
+            if (!document.getElementById('filter-single-date').value) {
+                document.getElementById('filter-single-date').value = todayStr;
+            }
+            if (!document.getElementById('filter-start-date').value) {
+                document.getElementById('filter-start-date').value = todayStr;
+            }
+            if (!document.getElementById('filter-end-date').value) {
+                document.getElementById('filter-end-date').value = todayStr;
+            }
+        }
+
+        function closeDateFilterModal() {
+            const modal = document.getElementById('date-filter-modal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+
+        function switchFilterMode(mode) {
+            currentFilterMode = mode;
+            const singleBtn = document.getElementById('mode-single-btn');
+            const rangeBtn = document.getElementById('mode-range-btn');
+            const singleContainer = document.getElementById('single-date-container');
+            const rangeContainer = document.getElementById('range-date-container');
+
+            if (mode === 'single') {
+                singleBtn.className = 'flex-1 py-2 rounded-lg bg-white text-indigo-600 shadow-sm transition-all font-semibold';
+                rangeBtn.className = 'flex-1 py-2 rounded-lg text-slate-600 hover:text-indigo-600 transition-all';
+                singleContainer.classList.remove('hidden');
+                rangeContainer.classList.add('hidden');
+            } else {
+                rangeBtn.className = 'flex-1 py-2 rounded-lg bg-white text-indigo-600 shadow-sm transition-all font-semibold';
+                singleBtn.className = 'flex-1 py-2 rounded-lg text-slate-600 hover:text-indigo-600 transition-all';
+                rangeContainer.classList.remove('hidden');
+                singleContainer.classList.add('hidden');
+            }
+        }
+
+        function applyDateFilter() {
+            if (currentFilterMode === 'single') {
+                const selectedDate = document.getElementById('filter-single-date').value;
+                if (!selectedDate) {
+                    showModal('Error', 'Please select a valid date.', 'error');
+                    return;
+                }
+                activeDateFilter = {
+                    type: 'single',
+                    start: selectedDate,
+                    end: selectedDate
+                };
+            } else {
+                const startDate = document.getElementById('filter-start-date').value;
+                const endDate = document.getElementById('filter-end-date').value;
+                if (!startDate || !endDate) {
+                    showModal('Error', 'Please select both start and end dates.', 'error');
+                    return;
+                }
+                if (startDate > endDate) {
+                    showModal('Error', 'Start date cannot be after end date.', 'error');
+                    return;
+                }
+                activeDateFilter = {
+                    type: 'range',
+                    start: startDate,
+                    end: endDate
+                };
+            }
+
+            closeDateFilterModal();
+            updateUI();
+        }
+
+        function clearDateFilter() {
+            activeDateFilter = null;
+            closeDateFilterModal();
+            updateUI();
+        }
+
+        // Update All UI elements and Totals
+        function updateUI() {
+            tableBody.innerHTML = '';
+            
+            // Apply date filtering to the history table if active
+            let displayedExpenses = expenses;
+            const bannerEl = document.getElementById('active-filter-banner');
+            const bannerText = document.getElementById('filter-banner-text');
+            const filterBtnText = document.getElementById('date-filter-btn-text');
+
+            if (activeDateFilter) {
+                bannerEl.classList.remove('hidden');
+                filterBtnText.innerText = 'Filtered Active';
+                if (activeDateFilter.type === 'single') {
+                    bannerText.innerText = `Showing expenses for date: ${activeDateFilter.start}`;
+                    displayedExpenses = expenses.filter(item => item.date === activeDateFilter.start);
+                } else {
+                    bannerText.innerText = `Showing expenses from ${activeDateFilter.start} to ${activeDateFilter.end}`;
+                    displayedExpenses = expenses.filter(item => item.date >= activeDateFilter.start && item.date <= activeDateFilter.end);
+                }
+            } else {
+                bannerEl.classList.add('hidden');
+                filterBtnText.innerText = 'Filter by Date';
+            }
+
+            if (displayedExpenses.length === 0) {
+                emptyState.classList.remove('hidden');
+                expenseCount.innerText = '0 items';
+            } else {
+                emptyState.classList.add('hidden');
+                expenseCount.innerText = `${displayedExpenses.length} item${displayedExpenses.length === 1 ? '' : 's'}`;
+                
+                displayedExpenses.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-slate-50/80 transition-colors border-b border-slate-50';
+                    row.innerHTML = `
+                        <td class="py-3.5 px-3 font-medium text-slate-800">${escapeHtml(item.desc)}</td>
+                        <td class="py-3.5 px-3">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium" style="background-color: ${categoryColors[item.category] || '#64748b'}15; color: ${categoryColors[item.category] || '#64748b'}">
+                                ${escapeHtml(item.category)}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-3 text-slate-500 text-xs">${item.date}</td>
+                        <td class="py-3.5 px-3 text-right font-semibold text-slate-800">RM ${item.amount.toFixed(2)}</td>
+                        <td class="py-3.5 px-3 text-center">
+                            <button onclick="deleteExpense(${item.id})" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg transition-colors" title="Delete Expense">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+
+            calculateTotals();
+            updateChart();
+        }
+
+        // Calculate Daily, Weekly, and Yearly Totals
+        function calculateTotals() {
+            const today = new Date();
+            const todayString = today.toISOString().split('T')[0];
+            
+            // Start of current week (Sunday)
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay());
+            startOfWeek.setHours(0, 0, 0, 0);
+
+            // Current Year
+            const currentYear = today.getFullYear();
+
+            let dailyTotal = 0;
+            let weeklyTotal = 0;
+            let yearlyTotal = 0;
+
+            expenses.forEach(item => {
+                const itemDate = new Date(item.date + 'T00:00:00');
+
+                // Daily check
+                if (item.date === todayString) {
+                    dailyTotal += item.amount;
+                }
+
+                // Weekly check (from start of current week onwards)
+                if (itemDate >= startOfWeek && itemDate <= today) {
+                    weeklyTotal += item.amount;
+                }
+
+                // Yearly check
+                if (itemDate.getFullYear() === currentYear) {
+                    yearlyTotal += item.amount;
+                }
+            });
+
+            totalDailyEl.innerText = `RM ${dailyTotal.toFixed(2)}`;
+            totalWeeklyEl.innerText = `RM ${weeklyTotal.toFixed(2)}`;
+            totalYearlyEl.innerText = `RM ${yearlyTotal.toFixed(2)}`;
+        }
+
+        // Initialize Chart.js Pie Chart
+        function initChart() {
+            const canvasEl = document.getElementById('expenseChart');
+            if (!canvasEl || typeof Chart === 'undefined') return;
+            const ctx = canvasEl.getContext('2d');
+            expenseChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                font: {
+                                    family: 'Inter',
+                                    size: 12
+                                },
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    label += 'RM ' + context.parsed.toFixed(2);
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+        }
+
+        // Set Chart Filter (All, Year, Week)
+        function setChartFilter(filter) {
+            chartFilter = filter;
+            
+            // Update button styles
+            ['all', 'year', 'week'].forEach(f => {
+                const btn = document.getElementById(`filter-${f}`);
+                if (f === filter) {
+                    btn.className = 'px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-sm transition-all font-semibold';
+                } else {
+                    btn.className = 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all';
+                }
+            });
+
+            updateChart();
+        }
+
+        // Update Chart data according to filter
+        function updateChart() {
+            if (!expenseChart) return;
+
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay());
+            startOfWeek.setHours(0, 0, 0, 0);
+
+            // Filter expenses based on selected timeframe
+            const filteredExpenses = expenses.filter(item => {
+                const itemDate = new Date(item.date + 'T00:00:00');
+                if (chartFilter === 'year') {
+                    return itemDate.getFullYear() === currentYear;
+                } else if (chartFilter === 'week') {
+                    return itemDate >= startOfWeek && itemDate <= today;
+                }
+                return true; // 'all'
+            });
+
+            // Aggregate totals by category
+            const categoryTotals = {};
+            filteredExpenses.forEach(item => {
+                categoryTotals[item.category] = (categoryTotals[item.category] || 0) + item.amount;
+            });
+
+            const labels = Object.keys(categoryTotals);
+            const data = Object.values(categoryTotals);
+            const backgroundColors = labels.map(cat => categoryColors[cat] || '#64748b');
+
+            expenseChart.data.labels = labels;
+            expenseChart.data.datasets[0].data = data;
+            expenseChart.data.datasets[0].backgroundColor = backgroundColors;
+            expenseChart.update();
+        }
+
+        // Custom Modal Utilities (replaces alert)
+        function showModal(title, message, type = 'success') {
+            const modal = document.getElementById('custom-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalMessage = document.getElementById('modal-message');
+            const modalIcon = document.getElementById('modal-icon');
+            const modalButtons = document.getElementById('modal-buttons');
+
+            modalTitle.innerText = title;
+            modalMessage.innerText = message;
+
+            if (type === 'success' || type === 'info') {
+                modalIcon.className = 'w-12 h-12 rounded-full flex items-center justify-center mx-auto text-xl bg-emerald-100 text-emerald-600';
+                modalIcon.innerHTML = type === 'success' ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-solid fa-circle-info"></i>';
+            } else {
+                modalIcon.className = 'w-12 h-12 rounded-full flex items-center justify-center mx-auto text-xl bg-rose-100 text-rose-600';
+                modalIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            }
+
+            modalButtons.innerHTML = `
+                <button onclick="closeModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition-all">
+                    OK
+                </button>
+            `;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('custom-modal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+
+        // HTML Sanitizer to prevent XSS
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
